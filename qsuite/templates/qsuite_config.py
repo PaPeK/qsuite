@@ -16,11 +16,16 @@ params4 = range(3)
 params5 = range(3)
 params6 = range(3)
 
+# EXTERNAL PARAMETERS: each computation node is assigned a unique combination of external parameters
+#  - external parameters should not influence computation time too much
+#     - OTHERWISE: 1 node takes forever, all others are done and waiting
 external_parameters = [
                         ( 'p1', params1[:2]   ),
                         ( 'p2', params2       ),
                         ( None   , measurements ),
                       ]
+# INTERNAL PARAMETERS: all combinations of internal parameters are computed on each node
+#  - internal parameters can influence computation time
 internal_parameters = [
                         ('p3', params3[:1]),
                         ('p3', params4[:]),
@@ -55,7 +60,7 @@ resultpath = serverpath + "/results"
 
 #============ CLUSTER PREPARATION ==================================================
 #======  bash code loading modules to enable python:                      ==========
-#======  e.g. "ml purge; ml +development/24.04 +GCCcore/13.3.0 +Python"   ==========
+#======  e.g. "ml purge; ml release/24.10 GCCcore/13.2.0 libffi/3.4.4 bzip2/1.0.8 Python/3.11.5"   ==========
 server_cmds = " "
 
 
