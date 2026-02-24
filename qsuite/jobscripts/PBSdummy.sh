@@ -2,6 +2,7 @@
 #taken from http://www.uibk.ac.at/zid/systeme/hpc-systeme/common/tutorials/pbs-howto.html#HDR1_1
 #PBS -l ncpus=1
 #PBS -l mem=%s
+#PBS -l walltime=%s
 #PBS -t %d-%d
 #PBS -o %s
 #PBS -e %s

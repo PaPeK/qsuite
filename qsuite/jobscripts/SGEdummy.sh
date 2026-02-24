@@ -2,6 +2,7 @@
 #$ -V
 #$ -cwd
 #$ -l mem=%s
+#$ -l h_rt=%s
 #$ -t %d-%d
 #$ -o %s
 #$ -e %s

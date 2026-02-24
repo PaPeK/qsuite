@@ -37,6 +37,7 @@ def get_jobscript(cf,array_id=None):
     jobscript = JOBSCRIPT % (\
                 cf.shell,
                 cf.memory,
+                cf.computation_time,
                 arr_id_min,
                 arr_id_max,
                 cf.serverpath + out_pattern,

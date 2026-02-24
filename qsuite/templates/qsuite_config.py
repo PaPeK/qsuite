@@ -42,6 +42,7 @@ only_save_times = False
 #=============== queue can be one of ['PBS', 'SGE', 'SLURM']    ===
 queue = "SLURM"
 memory = "1G"
+computation_time = "01:00:00"
 priority = 0
 
 #============ CLUSTER SETTINGS ============

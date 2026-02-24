@@ -2,6 +2,7 @@
 
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=%s
+#SBATCH --time=%s
 #SBATCH --array=%d-%d
 #SBATCH -o %s
 #SBATCH -e %s
