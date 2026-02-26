@@ -51,6 +51,9 @@ class qconfig(object):
         #inherit all properties from the config module
         self.inherit_properties(cf)
 
+        if not hasattr(self, "sftp_server"):
+            self.sftp_server = self.server
+
         #prepare parameters lists
         self.parameter_names, self.parameter_list = self.get_param_lists(self.external_parameters)
         self.internal_names, self.internal_parameter_list = self.get_param_lists(self.internal_parameters)

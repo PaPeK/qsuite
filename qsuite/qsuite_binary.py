@@ -556,6 +556,9 @@ def main():
 
             cf = qconfig(qsuiteparser=qsuiteparser)
             ssh = ssh_connect(cf)
+            sftp_ssh = ssh
+            if hasattr(cf, "sftp_server") and cf.sftp_server not in [None, "", cf.server]:
+                sftp_ssh = ssh_connect(cf, server_override=cf.sftp_server)
 
             # replace directory keyword with path
             for iarg, arg in enumerate(args):
@@ -566,7 +569,7 @@ def main():
                 sys.exit(0)        
             elif cmd in prep_cmds:
                 update_git(cf,ssh)
-                make_job_ready(cf,ssh)
+                make_job_ready(cf,ssh,sftp_ssh=sftp_ssh)
                 wrap_local(cf)
                 sys.exit(0)
             elif cmd in submit_cmds:
@@ -617,7 +620,7 @@ def main():
                     array_id = None
                     update_git(cf,ssh)
 
-                make_job_ready(cf,ssh,array_id)
+                make_job_ready(cf,ssh,array_id,sftp_ssh=sftp_ssh)
                 
                 if array_id is None:
                     wrap_local(cf)
@@ -665,7 +668,7 @@ def main():
             elif cmd in sftp_cmds:
                 files = args[1:]
                 files_dests = [ (f,cf.serverpath+"/"+f) for f in files ]
-                sftp_put_files(ssh,cf,files_dests)
+                sftp_put_files(sftp_ssh,cf,files_dests)
             elif cmd in get_cmds:
                 #get the wrapped result
                 if len(args)>1 and args[1] not in ["all","results","allresults"]:
@@ -673,7 +676,7 @@ def main():
                     local_filenames = [ f.split('/')[-1] for f in filenames ]
                     files_dests = [ (cf.serverpath+"/"+f, os.path.join(cwd,cf.localpath,local_f)) \
                                     for f,local_f in zip(filenames,local_filenames) ]
-                    sftp_get_files(ssh,cf,files_dests)
+                    sftp_get_files(sftp_ssh,cf,files_dests)
                 else:
                     get_all =  len(args)>1 and args[1] in ["all","allresults"]
                     pattern_tim = re.compile(r'time.*\.p*$')
@@ -684,7 +687,7 @@ def main():
                     resultlist = [ r for r in resultlist if not ((not get_all) and ((pattern_res.match(r)) or (pattern_tim.match(r)))) ]
 
                     files_dests = [ (cf.resultpath+"/"+f, os.path.join(cwd,cf.localpath,f)) for f in resultlist ]
-                    sftp_get_files(ssh,cf,files_dests)
+                    sftp_get_files(sftp_ssh,cf,files_dests)
 
             else:
                 pass

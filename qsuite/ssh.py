@@ -68,7 +68,7 @@ def ssh_command(ssh,command,noprint=False):
     return complete_received
 
 
-def ssh_connect(cf):
+def ssh_connect(cf, server_override=None):
     """
     this is adapted from code by Sebastian Dahlgren
     http://sebastiandahlgren.se/2012/10/11/using-paramiko-to-send-ssh-commands/
@@ -78,14 +78,17 @@ def ssh_connect(cf):
         ssh = paramiko.SSHClient()
         ssh.load_system_host_keys()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(cf.server,username=cf.username, pkey=key)
-        print("Connected to %s" % cf.server)
+        target_server = server_override if server_override else cf.server
+        ssh.connect(target_server,username=cf.username, pkey=key)
+        print("Connected to %s" % target_server)
     except paramiko.AuthenticationException as e:
-        print("Authentication failed when connecting to %s" % cf.server)
+        target_server = server_override if server_override else cf.server
+        print("Authentication failed when connecting to %s" % target_server)
         print("error:",e)
         sys.exit(1)
     except Exception as e:
-        print("Couldn't establish an ssh connection to %s" % cf.server)
+        target_server = server_override if server_override else cf.server
+        print("Couldn't establish an ssh connection to %s" % target_server)
         print("error:", e)
         sys.exit(1)
 

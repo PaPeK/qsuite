@@ -76,7 +76,7 @@ def get_file_list(cf):
 
     return files_destinations
 
-def make_job_ready(cf,ssh,array_id=None):
+def make_job_ready(cf,ssh,array_id=None,sftp_ssh=None):
 
     files_destinations = get_file_list(cf)
     joblocal_names = []
@@ -106,7 +106,8 @@ def make_job_ready(cf,ssh,array_id=None):
         files_destinations += [ (joblocalname, jobservername) ]
         joblocal_names.append(joblocalname)
 
-    sftp_put_files(ssh,cf,files_destinations)
+    sftp_client = sftp_ssh if sftp_ssh is not None else ssh
+    sftp_put_files(sftp_client,cf,files_destinations)
 
     for joblocalname in joblocal_names:
         qsuite.rm(joblocalname)

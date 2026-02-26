@@ -48,6 +48,8 @@ priority = 0
 #============ CLUSTER SETTINGS ============
 username = "user"
 server = "localhost"
+# NOTE: sftp_server only for data-transfer (DELETE if no specific data-transfer server exists)
+sftp_server = "localhost"
 useratserver = username + u'@' + server
 # below the project id of the SynoSys starter project,
 # if the computation is part of another project (p_replicatordyn, p_epoch_data), PLEASE specify here
