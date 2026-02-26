@@ -95,7 +95,7 @@ class qconfig(object):
 
     #============================= PARAMETER STRING CONVERSION FUNCTIONS ==========================
 
-    """
+    r"""
     def get_param_lists_old(self,pliststr,plist=None):
         if pliststr[-1]=="]" and pliststr[0]=="[":
             try:

@@ -2,6 +2,7 @@ from __future__ import print_function
 import paramiko
 import select
 import os
+import posixpath
 import sys
 from dotenv import dotenv_values
 from pathlib import Path
@@ -170,17 +171,33 @@ def sftp_put_files(ssh,cf,files_destinations):
 
     #additional_directories = set([cf.serverpath, cf.resultpath, cf.serverpath+"/output"])
     all_directories = set()
-    mkdir_p_string = "mkdir -p "+cf.serverpath+"/output; mkdir -p "+cf.resultpath+"; "
 
     for f,d in files_destinations:
         directory = '/'.join(d.split('/')[:-1])
 
         if directory not in all_directories:
             all_directories.add(directory)
-            mkdir_p_string += 'mkdir -p ' + directory + "; "
-
-    ssh_command(ssh,mkdir_p_string)
     ftp = ssh.open_sftp()
+
+    # Ensure remote directories exist via SFTP (works for sftp-only servers too).
+    def _sftp_mkdir_p(sftp, path):
+        if not path or path == "/":
+            return
+        parts = [p for p in path.split("/") if p]
+        current = "/" if path.startswith("/") else ""
+        for part in parts:
+            current = posixpath.join(current, part) if current else part
+            try:
+                sftp.stat(current)
+            except IOError:
+                try:
+                    sftp.mkdir(current)
+                except IOError:
+                    # Race or permission issue; re-check existence.
+                    sftp.stat(current)
+
+    for directory in sorted(all_directories):
+        _sftp_mkdir_p(ftp, directory)
 
     for f,d in files_destinations:
         print(" "+f+"\n =>"+d)
