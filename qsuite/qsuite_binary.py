@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os
 import sys
+import shlex
 import qsuite
 import subprocess
 import math 
@@ -157,6 +158,7 @@ def main():
     param_cmds = ["params"]
     convert_cmds = ["convert"]
     estimation_cmds = ["estimate", "estimatespace", "data"]
+    remote_cmds = ["remote"]
 
     if cmd in ["init","initialize"]:
         if len(args)==1:
@@ -376,7 +378,8 @@ def main():
 
     elif cmd in (git_cmds + submit_cmds + prep_cmds + reset_cmds + add_cmds + rm_cmds +\
                  set_cmds + wrap_cmds + status_cmds + ssh_cmds + sftp_cmds + customwrap_cmds +\
-                 get_cmds + test_cmds + param_cmds + qstatus_cmds + err_cmds + estimation_cmds):
+                 get_cmds + test_cmds + param_cmds + qstatus_cmds + err_cmds + estimation_cmds +\
+                 remote_cmds):
 
         #I do this to prevent that the default stuff can only be set in an initialized dir
         if not (cmd in set_cmds and len(args)>1 and args[1].startswith("default")):
@@ -552,7 +555,8 @@ def main():
 
 
         elif cmd in git_cmds + prep_cmds + submit_cmds + wrap_cmds + status_cmds +\
-                    ssh_cmds + sftp_cmds + customwrap_cmds + get_cmds + qstatus_cmds + err_cmds:
+                    ssh_cmds + sftp_cmds + customwrap_cmds + get_cmds + qstatus_cmds + err_cmds +\
+                    remote_cmds:
 
             cf = qconfig(qsuiteparser=qsuiteparser)
             ssh = ssh_connect(cf)
@@ -669,6 +673,23 @@ def main():
                 files = args[1:]
                 files_dests = [ (f,cf.serverpath+"/"+f) for f in files ]
                 sftp_put_files(sftp_ssh,cf,files_dests)
+                sys.exit(0)
+            elif cmd in remote_cmds:
+                if len(args) < 2:
+                    print("Missing subcommand. Use: qsuite remote clean [--dry-run]")
+                    sys.exit(1)
+                subcmd = args[1].lower()
+                if subcmd == "clean":
+                    # Use SSH server (not sftp_server) to remove remote workspace.
+                    target = shlex.quote(cf.serverpath)
+                    if "--dry-run" in opts:
+                        print("Dry run: rm -rf " + target)
+                        sys.exit(0)
+                    ssh_command(ssh, "rm -rf " + target)
+                    sys.exit(0)
+                else:
+                    print("Unknown remote subcommand", args[1])
+                    sys.exit(1)
             elif cmd in get_cmds:
                 #get the wrapped result
                 if len(args)>1 and args[1] not in ["all","results","allresults"]:
@@ -693,5 +714,3 @@ def main():
                 pass
     else:
         print("Command",cmd,"unknown.")
-
-
