@@ -14,3 +14,6 @@
 *.key
 
 .DS_Store
+
+# Zed editor settings
+.zed/settings.json
