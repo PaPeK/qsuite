@@ -22,6 +22,7 @@ def get_output_pattern(qname):
 def get_jobscript(cf,array_id=None):
     JOBSCRIPT = get_dummy(cf.queue)
     out_pattern = get_output_pattern(cf.queue)
+    computation_time = getattr(cf, "computation_time", "01:00:00")
 
     if array_id is None:
         arr_id_min = cf.jmin+1
@@ -37,7 +38,7 @@ def get_jobscript(cf,array_id=None):
     jobscript = JOBSCRIPT % (\
                 cf.shell,
                 cf.memory,
-                cf.computation_time,
+                computation_time,
                 arr_id_min,
                 arr_id_max,
                 cf.serverpath + out_pattern,
@@ -160,4 +161,3 @@ def start_job(cf,ssh,array_id=None):
     else:
         cmd = ('echo " " > '+filepath+'%d_%d; done;') % (int(array_id)-1,N)
     ssh_command(ssh,cmd)
-
