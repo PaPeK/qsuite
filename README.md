@@ -9,7 +9,7 @@ After the installation, a common qsuite workflow is:
 $ mkdir my_para_scan1; cd my_para_scan1
 $ qsuite init
 # modify the 3 just created files 
-# * env:              put your ssh-key and password, then hide it
+# * env:              optional with ssh-agent; otherwise put your ssh-key and password here and rename to .env
 # * qsuite_config.py: specify parameter and server settings
 # * simulation.py:    add your simulation function
 # now: 1. submit job, 2. check progress, 3. wrap results, 4. download results
@@ -38,13 +38,36 @@ Now send the login information to your remote server (note: if you have no `ssh-
 you@local$ ssh-copy-id -i ~/.ssh/id_ed25519.pub you@remote.server.de
 ```
 
-qsuite currently **only** supports **RSA** and **ED25519** keys. If you need another keytype, feel free to implement it(should be easy if supported by `paramiko`).
+### SSH authentication
+
+**Recommended: use an SSH agent** so your key's passphrase is not stored in the project:
+
+```bash
+# If your shell does not already have an agent, start one:
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519 # the path to your key
+ssh-add -l
+```
+
+Run qsuite from a shell with access to that agent (`SSH_AUTH_SOCK`). No `.env` is
+required. If switching from `.env`, remove its `pkey_file` and `password` entries.
+An unrelated `.env` without `pkey_file` does not prevent agent authentication.
+
+Authentication is selected in this order:
+1. If `.env` contains `pkey_file`, load that key using the optional `password`
+   passphrase, just as before. Empty paths, missing files, and incorrect
+   passphrases fail.
+2. Otherwise, if the SSH agent has keys, use the agent. This path does not
+   automatically search for private-key files on disk. If the server rejects
+   the agent's keys, authentication fails without falling back to key files.
+3. Otherwise, load `~/.ssh/id_rsa_groot` without a passphrase for compatibility.
+
 
 NOTEs:
-* **tell qsuite which file**: later on you can create a hidden `.env` file and specify the key and password to use
-  * **default-key**: to be compatible with older versions, if you have no `.env` file, qsuite assumes there is a `~/.ssh/id_rsa_groot` key-file
-* **key-file-name**: The name of your id file should contain the key-type in order for qsuite to know what to do. (e.g. id_rsa_blabla for `RSA` or id_ed25519_bla for `ED225519`)
-
+* **explicit key**: you can still create a `.env` file and specify the key path and passphrase to use.
+* **signatures**: Direct key-file loading supports **RSA** and **ED25519** keys.
+* **key-file-name**: For direct file loading, the filename must contain the key type (e.g. `id_rsa_blabla` or `id_ed25519_bla`).
+* **default-key**: to be compatible with (much) older versions, if you have no `.env` file and no active shh agent, qsuite assumes there is a `~/.ssh/id_rsa_groot` key-file
 
 ### Additional Mac OSX
 
@@ -229,9 +252,10 @@ git_repos = [
 
 * `env`
 
-  This file the path to your ssh-key and its password.
+  Optional when using an SSH agent. For explicit key-file authentication, this
+  file holds the path to your SSH key and optionally its passphrase.
   1. change the values
-  2. hide it by running `mv env .env`
+  2. rename it by running `mv env .env` and ensure `.env` is ignored by your project's Git configuration
   The default file looks like:
   
   ```bash

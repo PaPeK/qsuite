@@ -80,7 +80,8 @@ def ssh_connect(cf, server_override=None):
         ssh.load_system_host_keys()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         target_server = server_override if server_override else cf.server
-        ssh.connect(target_server,username=cf.username, pkey=key)
+        ssh.connect(target_server, username=cf.username, pkey=key,
+                    allow_agent=True, look_for_keys=key is not None)
         print("Connected to %s" % target_server)
     except paramiko.AuthenticationException as e:
         target_server = server_override if server_override else cf.server
@@ -97,26 +98,38 @@ def ssh_connect(cf, server_override=None):
 
 
 def get_ssh_key():
-    """loads the ssh-key:
-            if .env exists: from entries in .env
-                - use RSA or Ed25519 depending on name
-            elif ~/.ssh/id_rsa_groot: use this one
+    """Load an explicit .env key, prefer an agent, then try the legacy key.
+
+    Return None to let Paramiko authenticate through the SSH agent.
     """
     f_env = Path.cwd() / '.env'
 
     # ======== determine key-file ========
     f_default_key = Path('~/.ssh/id_rsa_groot').expanduser()
     with_pw = False
-    if f_env.exists():
-        env_variables = dotenv_values('.env')
-        if Path(env_variables['pkey_file']).exists():
-            f_key = Path(env_variables['pkey_file'])
-        if 'password' in env_variables.keys():
-            with_pw = True
-    elif f_default_key.exists():
-        f_key = f_default_key
+    env_variables = dotenv_values(f_env) if f_env.exists() else {}
+    if 'pkey_file' in env_variables:
+        if not env_variables['pkey_file']:
+            raise ValueError("pkey_file in .env is empty; set a key path or remove it to use ssh-agent")
+        f_key = Path(env_variables['pkey_file']).expanduser()
+        if not f_key.is_file():
+            raise FileNotFoundError("Private key configured by pkey_file in .env does not exist: %s" % f_key)
+        with_pw = 'password' in env_variables
     else:
-        raise FileNotFoundError("No valid key found in .env or ~/.ssh/id_rsa_groot")
+        agent = paramiko.Agent()
+        try:
+            if agent.get_keys():
+                return None
+        finally:
+            agent.close()
+        if f_default_key.is_file():
+            f_key = f_default_key
+        else:
+            raise FileNotFoundError(
+                "No SSH credentials found. Add a key to ssh-agent with "
+                "'ssh-add ~/.ssh/id_ed25519', configure pkey_file in .env, "
+                "or provide ~/.ssh/id_rsa_groot."
+            )
 
     # ======== determine key-method ========
     if 'ed25519' in f_key.parts[-1].lower():
